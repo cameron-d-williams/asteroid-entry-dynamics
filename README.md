@@ -1,5 +1,7 @@
 # Asteroid Entry Dynamics
 
+[![CI](https://github.com/cameron-d-williams/asteroid-entry-dynamics/actions/workflows/ci.yml/badge.svg)](https://github.com/cameron-d-williams/asteroid-entry-dynamics/actions/workflows/ci.yml)
+
 A scientific Python project investigating numerical integration, high-throughput simulation, differentiable physics and gradient-enhanced surrogate modelling of asteroid atmospheric entry.
 
 ## Project status
