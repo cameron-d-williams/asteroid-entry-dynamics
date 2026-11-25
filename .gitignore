@@ -1,0 +1,50 @@
+# Virtual environments
+.venv/
+venv/
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Package distributions
+build/
+dist/
+*.egg-info/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Code quality tools
+.ruff_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE configuration
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Local and generated datasets
+data/raw/
+data/processed/
+data/synthetic/
+
+# Generated research outputs
+results/
+checkpoints/
+
+# Generated documentation
+docs/_build/

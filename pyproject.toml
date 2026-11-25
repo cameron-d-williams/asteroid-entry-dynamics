@@ -1,0 +1,91 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "asteroid-entry-dynamics"
+version = "0.1.0"
+description = "Numerical and differentiable simulation of asteroid atmospheric entry."
+readme = "README.md"
+requires-python = ">=3.12"
+
+keywords = [
+    "scientific-computing",
+    "computational-physics",
+    "numerical-methods",
+    "atmospheric-entry",
+    "differentiable-physics",
+]
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: Python :: 3",
+]
+
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.14",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+research = [
+    "pandas",
+    "matplotlib",
+    "jupyterlab",
+    "ipykernel",
+]
+
+[tool.uv]
+default-groups = ["dev", "research"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/asteroid_entry"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: computationally expensive tests",
+    "gpu: tests requiring GPU hardware",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "NPY"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_return_any = true
+check_untyped_defs = true
+
+[tool.coverage.run]
+source = ["asteroid_entry"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
