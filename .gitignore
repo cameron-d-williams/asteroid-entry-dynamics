@@ -1,3 +1,4 @@
+
 # Virtual environments
 .venv/
 venv/
@@ -7,14 +8,17 @@ venv/
 .env.*
 !.env.example
 
-# Python bytecode
+# Python bytecode and compiled extensions
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
 
 # Package distributions
 build/
 dist/
 *.egg-info/
+.eggs/
 
 # Testing and coverage
 .pytest_cache/
@@ -22,29 +26,38 @@ dist/
 .coverage.*
 htmlcov/
 coverage.xml
+.hypothesis/
 
-# Code quality tools
+# Code quality and static analysis
 .ruff_cache/
 .mypy_cache/
+.dmypy.json
+dmypy.json
 
-# Jupyter
+# Jupyter and IPython
 .ipynb_checkpoints/
+.ipython/
+profile_default/
 
-# IDE configuration
+# IDE and editor configuration
 .idea/
 .vscode/
+*.swp
+*.swo
 
-# macOS
+# Operating system metadata
 .DS_Store
+Thumbs.db
+Desktop.ini
 
 # Local and generated datasets
-data/raw/
-data/processed/
-data/synthetic/
+/data/raw/
+/data/processed/
+/data/synthetic/
 
 # Generated research outputs
-results/
-checkpoints/
+/results/
+/checkpoints/
 
 # Generated documentation
-docs/_build/
+/docs/_build/

@@ -1,3 +1,4 @@
+
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
@@ -35,6 +36,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "mypy",
+    "numpydoc",
 ]
 
 research = [
@@ -42,6 +44,13 @@ research = [
     "matplotlib",
     "jupyterlab",
     "ipykernel",
+]
+
+docs = [
+    "sphinx",
+    "numpydoc",
+    "pydata-sphinx-theme",
+    "sphinx-autobuild>=2025.8.25",
 ]
 
 [tool.uv]
@@ -68,14 +77,53 @@ markers = [
 
 [tool.ruff]
 line-length = 88
+indent-width = 4
 target-version = "py312"
+src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "NPY"]
+select = [
+    "E",    # PEP 8 errors.
+    "F",    # Pyflakes.
+    "I",    # Import sorting.
+    "UP",   # Python syntax modernisation.
+    "B",    # Flake8-bugbear.
+    "NPY",  # NumPy-specific checks.
+    "D",    # Docstring conventions.
+    "W291", # Trailing whitespace.
+    "W292", # Missing newline at end of file.
+    "W293", # Whitespace on blank lines.
+    "W505", # Documentation line length.
+]
+
+ignore = [
+    "E111", # Indentation handled by the formatter.
+    "E114", # Comment indentation handled by the formatter.
+    "E117", # Over-indentation handled by the formatter.
+    "D206", # Docstring indentation handled by the formatter.
+    "D300", # Docstring quotation handled by the formatter.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 75
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+docstring-code-line-length = 60
+
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "EX01", # Examples are not required for every documented object.
+    "SA01", # See Also is not required for every documented object.
+    "ES01", # Extended summaries are not always necessary.
+]
 
 [tool.mypy]
 python_version = "3.12"
