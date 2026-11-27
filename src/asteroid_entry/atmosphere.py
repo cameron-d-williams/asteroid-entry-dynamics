@@ -78,7 +78,7 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
     Setting `surface_density` to zero represents a vacuum.
 
     The physical constraint on `surface_density` is not enforced during
-    initialisation.
+    initialization.
 
     Examples
     --------
@@ -117,7 +117,7 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
     r"""Atmosphere with a constant density scale height.
 
     Parameters are keyword-only and cannot be reassigned after
-    initialisation.
+    initialization.
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
     rather than a physical model of the subsurface.
 
     The physical constraints on the model parameters are not enforced
-    during initialisation.
+    during initialization.
 
     Examples
     --------
