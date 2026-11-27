@@ -132,7 +132,7 @@ warn_return_any = true
 check_untyped_defs = true
 
 [tool.coverage.run]
-source = ["asteroid_entry"]
+source = ["src/asteroid_entry"]
 branch = true
 
 [tool.coverage.report]
