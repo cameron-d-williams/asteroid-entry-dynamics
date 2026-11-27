@@ -1,12 +1,14 @@
 """Tests for analytical and empirical atmospheric density models."""
 
-from math import e
+from math import e, isfinite
 
 import pytest
 
 from asteroid_entry.atmosphere import (
+    Atmosphere,
     ConstantAtmosphere,
     ExponentialAtmosphere,
+    GlennAtmosphere,
 )
 
 
@@ -191,3 +193,186 @@ class TestExponentialAtmosphere:
         atmosphere = ExponentialAtmosphere(surface_density=0.0)
 
         assert atmosphere.density(altitude) == 0.0
+
+
+class TestGlennAtmosphere:
+    """Tests for the NASA Glenn empirical atmospheric density model."""
+
+    # Reference densities evaluated using the original temperature
+    # and pressure fits in degrees Celsius and kilopascals.
+    @pytest.mark.parametrize(
+        ("altitude", "expected_density"),
+        [
+            (0.0, 1.22661378741097),
+            (5_000.0, 0.737674576847043),
+            (20_000.0, 0.0889700411864835),
+            (50_000.0, 1.01551513243895e-3),
+            (80_000.0, 3.65450834776723e-5),
+            (100_000.0, 6.00668923433141e-6),
+        ],
+    )
+    def test_reference_density(self, altitude: float, expected_density: float) -> None:
+        """Verify atmospheric density against reference calculations.
+
+        Parameters
+        ----------
+        altitude : float
+            Geometric altitude relative to the Earth's reference
+            surface (m).
+        expected_density : float
+            Reference atmospheric mass density (kg m^-3).
+
+        Notes
+        -----
+        The reference values are calculated using the original empirical
+        expressions rather than the reformulated SI implementation.
+
+        Agreement verifies consistency with the original formulation,
+        not agreement with measured atmospheric densities.
+        """
+        assert GlennAtmosphere().density(altitude) == pytest.approx(
+            expected_density, rel=1e-10, abs=0.0
+        )
+
+    @pytest.mark.parametrize(
+        ("altitude", "expected_density"),
+        [
+            (10_999.0, 0.365201392145206),
+            (11_000.0, 0.365512214480260),
+            (11_001.0, 0.365454833567106),
+            (24_999.0, 0.0405873603692201),
+            (25_000.0, 0.0399455056776541),
+            (25_001.0, 0.0399386766080643),
+        ],
+    )
+    def test_layer_boundaries(self, altitude: float, expected_density: float) -> None:
+        """Verify density evaluations at atmospheric layer boundaries.
+
+        Parameters
+        ----------
+        altitude : float
+            Geometric altitude at or adjacent to an atmospheric layer
+            boundary (m).
+        expected_density : float
+            Reference atmospheric mass density (kg m^-3).
+
+        Notes
+        -----
+        Evaluations are performed at each boundary and one metre above
+        and below it to verify the selection of the empirical expressions.
+
+        The independently fitted expressions are not necessarily
+        continuous across the layer boundaries. These tests verify the
+        expected piecewise behaviour rather than enforce continuity.
+        """
+        assert GlennAtmosphere().density(altitude) == pytest.approx(
+            expected_density, rel=1e-10, abs=0.0
+        )
+
+    @pytest.mark.parametrize("altitude", [-8_000.0, -100.0, -1.0])
+    def test_negative_altitude_clamping(self, altitude: float) -> None:
+        """Verify that negative altitudes use the surface density.
+
+        Parameters
+        ----------
+        altitude : float
+            Negative geometric altitude relative to the Earth's
+            reference surface (m).
+        """
+        atmosphere = GlennAtmosphere()
+
+        assert atmosphere.density(altitude) == atmosphere.density(0.0)
+
+    @pytest.mark.parametrize("altitude", [120_000.0, 150_000.0, 200_000.0])
+    def test_high_altitude_extrapolation(self, altitude: float) -> None:
+        """Verify positive, reduced density at extrapolated altitudes.
+
+        Parameters
+        ----------
+        altitude : float
+            Geometric altitude above the comparison altitude of
+            100 km (m).
+
+        Notes
+        -----
+        The uppermost empirical expression is extrapolated beyond
+        the altitude range used for the reference density tests.
+
+        This verifies mathematical behaviour at the sampled altitudes,
+        not the physical validity of the high-altitude extrapolation.
+        """
+        atmosphere = GlennAtmosphere()
+        density = atmosphere.density(altitude)
+
+        assert 0.0 < density < atmosphere.density(100_000.0)
+
+    @pytest.mark.parametrize("altitude", [float(z) for z in range(0, 100_001, 1_000)])
+    def test_positive_finite_density(self, altitude: float) -> None:
+        """Verify positive and finite density at sampled altitudes.
+
+        Parameters
+        ----------
+        altitude : float
+            Geometric altitude sampled between 0 and 100 km at
+            intervals of 1 km (m).
+
+        Notes
+        -----
+        The discrete sampling verifies positivity and finiteness at
+        the selected altitudes rather than establishing these
+        properties over the entire continuous altitude domain.
+        """
+        density = GlennAtmosphere().density(altitude)
+
+        assert isfinite(density)
+        assert density > 0.0
+
+
+@pytest.mark.parametrize(
+    "atmosphere",
+    [ConstantAtmosphere(), ExponentialAtmosphere(), GlennAtmosphere()],
+    ids=["constant", "exponential", "glenn"],
+)
+class TestAtmosphereContract:
+    """Tests for behaviour shared by atmospheric density models."""
+
+    @pytest.mark.parametrize("altitude", [-100.0, 0.0, 10_000.0, 100_000.0])
+    def test_scalar_return_type(self, atmosphere: Atmosphere, altitude: float) -> None:
+        """Verify that atmospheric density is returned as a float.
+
+        Parameters
+        ----------
+        atmosphere : Atmosphere
+            Atmospheric density model under test.
+        altitude : float
+            Geometric altitude relative to the planetary reference
+            surface (m).
+        """
+        assert isinstance(atmosphere.density(altitude), float)
+
+    @pytest.mark.parametrize("altitude", [-100.0, 0.0, 10_000.0, 100_000.0])
+    def test_finite_non_negative_density(
+        self, atmosphere: Atmosphere, altitude: float
+    ) -> None:
+        """Verify finite and non-negative atmospheric mass density.
+
+        Parameters
+        ----------
+        atmosphere : Atmosphere
+            Atmospheric density model under test.
+        altitude : float
+            Geometric altitude relative to the planetary reference
+            surface (m).
+
+        Notes
+        -----
+        Non-negative density permits vacuum configurations, whereas
+        strictly positive density would exclude them.
+
+        The test verifies the selected model configurations and
+        altitudes rather than all possible model parameter values.
+        """
+        density = atmosphere.density(altitude)
+
+        assert isfinite(density)
+        assert density >= 0.0
