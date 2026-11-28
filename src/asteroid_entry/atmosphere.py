@@ -8,7 +8,7 @@ The treatment of negative altitudes is specific to each model.
 """
 
 from dataclasses import dataclass
-from math import exp, pow
+from math import exp, isfinite, pow
 from typing import Protocol
 
 
@@ -57,6 +57,11 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
     surface_density : float
         Constant atmospheric mass density (kg m^-3).
 
+    Raises
+    ------
+    ValueError
+        If `surface_density` is non-finite or negative.
+
     See Also
     --------
     Atmosphere : Structural interface for atmospheric density models.
@@ -77,9 +82,6 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
     numerical experiments rather than realistic atmospheric modelling.
     Setting `surface_density` to zero represents a vacuum.
 
-    The physical constraint on `surface_density` is not enforced during
-    initialization.
-
     Examples
     --------
     >>> atmosphere = ConstantAtmosphere(surface_density=0.5)
@@ -92,6 +94,17 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
     """
 
     surface_density: float = 1.2
+
+    def __post_init__(self) -> None:
+        """Validate the atmospheric model parameters.
+
+        Raises
+        ------
+        ValueError
+            If `surface_density` is non-finite or negative.
+        """
+        if not isfinite(self.surface_density) or self.surface_density < 0.0:
+            raise ValueError("surface_density must be finite and non-negative.")
 
     def density(self, altitude: float) -> float:
         """Evaluate constant atmospheric mass density.
@@ -119,15 +132,14 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
     Parameters are keyword-only and cannot be reassigned after
     initialization.
 
-    Parameters
+        Parameters
     ----------
     surface_density : float, optional
         Atmospheric mass density at zero altitude (kg m^-3). Must be
-        finite and non-negative for physical validity. The default is
-        1.2.
+        finite and non-negative. The default is 1.2.
     scale_height : float, optional
-        Atmospheric density scale height (m). Must be finite and
-        strictly positive for physical validity. The default is 8000.0.
+        Atmospheric density scale height (m). Must be finite and strictly
+        positive. The default is 8000.0.
 
     Attributes
     ----------
@@ -135,6 +147,12 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
         Atmospheric mass density at zero altitude (kg m^-3).
     scale_height : float
         Atmospheric density scale height (m).
+
+    Raises
+    ------
+    ValueError
+        If `surface_density` is non-finite or negative, or if
+        `scale_height` is non-finite or non-positive.
 
     See Also
     --------
@@ -163,9 +181,6 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
     or composition. Extrapolation below zero altitude is mathematical
     rather than a physical model of the subsurface.
 
-    The physical constraints on the model parameters are not enforced
-    during initialization.
-
     Examples
     --------
     >>> atmosphere = ExponentialAtmosphere()
@@ -181,6 +196,21 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
 
     surface_density: float = 1.2
     scale_height: float = 8_000.0
+
+    def __post_init__(self) -> None:
+        """Validate the atmospheric model parameters.
+
+        Raises
+        ------
+        ValueError
+            If `surface_density` is non-finite or negative, or if
+            `scale_height` is non-finite or non-positive.
+        """
+        if not isfinite(self.surface_density) or self.surface_density < 0.0:
+            raise ValueError("surface_density must be finite and non-negative.")
+
+        if not isfinite(self.scale_height) or self.scale_height <= 0.0:
+            raise ValueError("scale_height must be finite and strictly positive.")
 
     def density(self, altitude: float) -> float:
         """Evaluate exponential atmospheric mass density.
@@ -201,8 +231,6 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
         ------
         OverflowError
             If the exponential cannot be represented as a float.
-        ZeroDivisionError
-            If `scale_height` is zero.
         """
         return self.surface_density * exp(-altitude / self.scale_height)
 
