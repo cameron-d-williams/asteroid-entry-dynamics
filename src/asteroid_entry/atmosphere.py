@@ -370,7 +370,6 @@ class GlennAtmosphere:
         ValueError
             If `altitude` is non-finite.
         """
-
         _validate_altitude(altitude)
 
         # Use the surface fit for below-surface evaluations.
