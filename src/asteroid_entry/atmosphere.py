@@ -34,6 +34,11 @@ class Atmosphere(Protocol):  # numpydoc ignore=PR01
         -------
         float
             Atmospheric mass density (kg m^-3).
+
+        Raises
+        ------
+        ValueError
+            If `altitude` is non-finite.
         """
         ...
 
@@ -79,7 +84,7 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
     the geometric altitude and :math:`\rho_0` is the prescribed density.
 
     This model is intended for analytical verification and simplified
-    numerical experiments rather than realistic atmospheric modelling.
+    numerical experiments rather than realistic atmospheric modeling.
     Setting `surface_density` to zero represents a vacuum.
 
     Examples
@@ -121,6 +126,9 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
         float
             Atmospheric mass density (kg m^-3).
         """
+        if not isfinite(altitude):
+            raise ValueError("altitude must be finite.")
+
         return self.surface_density
 
 
@@ -232,6 +240,9 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
         OverflowError
             If the exponential cannot be represented as a float.
         """
+        if not isfinite(altitude):
+            raise ValueError("altitude must be finite.")
+
         return self.surface_density * exp(-altitude / self.scale_height)
 
 
@@ -307,6 +318,10 @@ class GlennAtmosphere:
         float
             Atmospheric mass density (kg m^-3).
         """
+
+        if not isfinite(altitude):
+            raise ValueError("altitude must be finite.")
+
         # Use the surface fit for below-surface evaluations.
         altitude = max(altitude, 0.0)
 
