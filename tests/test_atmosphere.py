@@ -60,6 +60,31 @@ class TestConstantAtmosphere:
 
         assert atmosphere.density(altitude) == 0.0
 
+    @pytest.mark.parametrize(
+        "surface_density",
+        [-1.0, float("nan"), float("inf"), -float("inf")],
+        ids=["negative", "nan", "positive-infinity", "negative-infinity"],
+    )
+    def test_invalid_surface_density(self, surface_density: float) -> None:
+        """Verify that invalid surface density values are rejected.
+
+        Parameters
+        ----------
+        surface_density : float
+            Invalid prescribed atmospheric mass density (kg m^-3).
+
+        Notes
+        -----
+        Atmospheric mass density must be finite and non-negative.
+        A surface density of zero remains valid and represents a
+        vacuum.
+
+        Validation is expected to occur during model initialization
+        rather than during subsequent density evaluations.
+        """
+        with pytest.raises(ValueError):
+            ConstantAtmosphere(surface_density=surface_density)
+
 
 class TestExponentialAtmosphere:
     """Tests for the exponential atmospheric density model."""
@@ -193,6 +218,73 @@ class TestExponentialAtmosphere:
         atmosphere = ExponentialAtmosphere(surface_density=0.0)
 
         assert atmosphere.density(altitude) == 0.0
+
+    @pytest.mark.parametrize(
+        "surface_density",
+        [-1.0, float("nan"), float("inf"), -float("inf")],
+        ids=["negative", "nan", "positive-infinity", "negative-infinity"],
+    )
+    def test_invalid_surface_density(self, surface_density: float) -> None:
+        """Verify that invalid surface density values are rejected.
+
+        Parameters
+        ----------
+        surface_density : float
+            Invalid atmospheric mass density at zero altitude
+            (kg m^-3).
+
+        Notes
+        -----
+        The surface density must be finite and non-negative.
+        A surface density of zero remains valid and represents a
+        vacuum.
+
+        Validation is expected to occur during model initialization.
+        """
+        with pytest.raises(ValueError):
+            ExponentialAtmosphere(surface_density=surface_density)
+
+    @pytest.mark.parametrize(
+        "scale_height",
+        [0.0, -1.0, float("nan"), float("inf"), -float("inf")],
+        ids=[
+            "zero",
+            "negative",
+            "nan",
+            "positive-infinity",
+            "negative-infinity",
+        ],
+    )
+    def test_invalid_scale_height(self, scale_height: float) -> None:
+        r"""Verify that invalid atmospheric scale heights are rejected.
+
+        Parameters
+        ----------
+        scale_height : float
+            Invalid atmospheric density scale height (m).
+
+        Notes
+        -----
+        The exponential atmospheric density model is defined by
+
+        .. math::
+
+            \rho_a(z) = \rho_0 \exp\left(-\frac{z}{H}\right),
+
+        where :math:`\rho_a` is the atmospheric mass density,
+        :math:`\rho_0` is the surface density, :math:`z` is the
+        geometric altitude and :math:`H` is the density scale height.
+
+        A zero scale height makes the expression undefined, whereas
+        a negative scale height produces increasing density with
+        increasing altitude for positive surface density.
+
+        The scale height must therefore be finite and strictly
+        positive for the intended physical model. Validation is
+        expected to occur during model initialization.
+        """
+        with pytest.raises(ValueError):
+            ExponentialAtmosphere(scale_height=scale_height)
 
 
 class TestGlennAtmosphere:
@@ -376,3 +468,32 @@ class TestAtmosphereContract:
 
         assert isfinite(density)
         assert density >= 0.0
+
+    @pytest.mark.parametrize(
+        "altitude",
+        [float("nan"), float("inf"), -float("inf")],
+        ids=["nan", "positive-infinity", "negative-infinity"],
+    )
+    def test_non_finite_altitude(self, atmosphere: Atmosphere, altitude: float) -> None:
+        """Verify that non-finite altitude values are rejected.
+
+        Parameters
+        ----------
+        atmosphere : Atmosphere
+            Atmospheric density model under test.
+        altitude : float
+            Non-finite geometric altitude relative to the planetary
+            reference surface (m).
+
+        Notes
+        -----
+        Atmospheric density evaluations require a finite geometric
+        altitude. Non-finite values are rejected rather than
+        propagated through the atmospheric density calculations.
+
+        Finite negative altitudes remain permitted and are handled
+        according to the documented extrapolation policy of each
+        atmospheric model.
+        """
+        with pytest.raises(ValueError):
+            atmosphere.density(altitude)
