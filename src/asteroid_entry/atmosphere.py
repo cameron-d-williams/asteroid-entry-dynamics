@@ -12,6 +12,50 @@ from math import exp, isfinite, pow
 from typing import Protocol
 
 
+def _validate_surface_density(surface_density: float) -> None:
+    """Validate a prescribed atmospheric surface density.
+
+    Parameters
+    ----------
+    surface_density : float
+        Atmospheric mass density at zero altitude (kg m^-3).
+
+    Raises
+    ------
+    ValueError
+        If `surface_density` is non-finite or negative.
+
+    Notes
+    -----
+    A surface density of zero is permitted and represents a vacuum.
+    """
+    if not isfinite(surface_density) or surface_density < 0.0:
+        raise ValueError("surface_density must be finite and non-negative.")
+
+
+def _validate_altitude(altitude: float) -> None:
+    """Validate a geometric altitude for atmospheric density evaluation.
+
+    Parameters
+    ----------
+    altitude : float
+        Geometric altitude relative to the planetary reference
+        surface (m).
+
+    Raises
+    ------
+    ValueError
+        If `altitude` is non-finite.
+
+    Notes
+    -----
+    Finite negative altitudes are permitted. Their treatment is
+    determined by the individual atmospheric model.
+    """
+    if not isfinite(altitude):
+        raise ValueError("altitude must be finite.")
+
+
 # Protocol constructor arguments are not part of the public interface.
 class Atmosphere(Protocol):  # numpydoc ignore=PR01
     """Structural interface for atmospheric density models.
@@ -108,8 +152,7 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
         ValueError
             If `surface_density` is non-finite or negative.
         """
-        if not isfinite(self.surface_density) or self.surface_density < 0.0:
-            raise ValueError("surface_density must be finite and non-negative.")
+        _validate_surface_density(self.surface_density)
 
     def density(self, altitude: float) -> float:
         """Evaluate constant atmospheric mass density.
@@ -125,9 +168,13 @@ class ConstantAtmosphere:  # numpydoc ignore=PR02
         -------
         float
             Atmospheric mass density (kg m^-3).
+
+        Raises
+        ------
+        ValueError
+            If `altitude` is non-finite.
         """
-        if not isfinite(altitude):
-            raise ValueError("altitude must be finite.")
+        _validate_altitude(altitude)
 
         return self.surface_density
 
@@ -140,7 +187,7 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
     Parameters are keyword-only and cannot be reassigned after
     initialization.
 
-        Parameters
+    Parameters
     ----------
     surface_density : float, optional
         Atmospheric mass density at zero altitude (kg m^-3). Must be
@@ -214,8 +261,7 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
             If `surface_density` is non-finite or negative, or if
             `scale_height` is non-finite or non-positive.
         """
-        if not isfinite(self.surface_density) or self.surface_density < 0.0:
-            raise ValueError("surface_density must be finite and non-negative.")
+        _validate_surface_density(self.surface_density)
 
         if not isfinite(self.scale_height) or self.scale_height <= 0.0:
             raise ValueError("scale_height must be finite and strictly positive.")
@@ -237,11 +283,12 @@ class ExponentialAtmosphere:  # numpydoc ignore=PR02
 
         Raises
         ------
+        ValueError
+            If `altitude` is non-finite.
         OverflowError
             If the exponential cannot be represented as a float.
         """
-        if not isfinite(altitude):
-            raise ValueError("altitude must be finite.")
+        _validate_altitude(altitude)
 
         return self.surface_density * exp(-altitude / self.scale_height)
 
@@ -317,10 +364,14 @@ class GlennAtmosphere:
         -------
         float
             Atmospheric mass density (kg m^-3).
+
+        Raises
+        ------
+        ValueError
+            If `altitude` is non-finite.
         """
 
-        if not isfinite(altitude):
-            raise ValueError("altitude must be finite.")
+        _validate_altitude(altitude)
 
         # Use the surface fit for below-surface evaluations.
         altitude = max(altitude, 0.0)
